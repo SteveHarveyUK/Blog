@@ -8,17 +8,13 @@ namespace Metrics
 {
     class Program
     {
+        internal static ICustomMetricsService SourceA = MetricsFactory.GetCustomMetricsService("SourceA", 1.0, false);
+        internal static ICustomMetricsService SourceB = MetricsFactory.GetCustomMetricsService("SourceB", 1.0, false);
+
         static void Main(string[] args)
         {
-            var reader = new CustomMetricsEventListener();
-            var arguments = new Dictionary<string, string>
-            {
-                {"EventCounterIntervalSec", "1"}
-            };
-            reader.EnableEvents(CustomMetricsEventSource.Log, EventLevel.LogAlways, EventKeywords.All, arguments);
-
             var random = new Random();
-            for (int i = 0; i <= 10; i++)
+            for (int i = 0; i <= 40; i++)
             {
                 SleepingBeauty(random.Next(10, 200));
             }
@@ -28,14 +24,20 @@ namespace Metrics
 
         static void SleepingBeauty(int sleepTimeInMs)
         {
+            Debug.WriteLine($"SleepingBeauty({sleepTimeInMs})...");
             var stopwatch = Stopwatch.StartNew();
 
             Thread.Sleep(sleepTimeInMs);
 
             stopwatch.Stop();
 
-            CustomMetricsEventSource.Log.ReportMethodDurationInMs(stopwatch.ElapsedMilliseconds);
-            CustomMetricsEventSource.Log.ReportMetric("someCounter", DateTime.Now.Millisecond);
+            SourceA.ReportMethodDurationInMs(stopwatch.ElapsedMilliseconds);
+            SourceA.ReportMetric("someCounter", DateTime.Now.Millisecond);
+
+            // SourceB.ReportMethodDurationInMs(stopwatch.ElapsedMilliseconds);
+            SourceB.ReportMetric("someOtherCounter", DateTime.Now.Millisecond);
+
+            Debug.WriteLine($"SleepingBeauty({sleepTimeInMs}) complete.");
         }
     }
 }

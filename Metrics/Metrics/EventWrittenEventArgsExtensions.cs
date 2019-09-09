@@ -1,15 +1,13 @@
-﻿using System.Diagnostics.Tracing;
+﻿using System;
+using System.Diagnostics.Tracing;
 
 namespace Metrics
 {
-    /// <summary>
-    /// Extensions methods for <see cref="EventWrittenEventArgs"/>
-    /// </summary>
     public static class EventWrittenEventArgsExtensions
     {
         public static bool IsEventCounter(this EventWrittenEventArgs eventData)
         {
-            return eventData.EventName == "EventCounters";
+            return string.Equals(eventData.EventName, "EventCounters", StringComparison.Ordinal);
         }
 
         public static EventCounterData ToEventCounterData(this EventWrittenEventArgs eventData)
