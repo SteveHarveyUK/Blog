@@ -23,12 +23,12 @@ namespace Metrics
         /// <param name="name"></param>
         /// <param name="updateRateSeconds"></param>
         /// <returns></returns>
-        public static ICustomMetricsService GetCustomMetricsService(string name, double updateRateSeconds, bool enableFiltering)
+        public static ICustomMetricsService GetCustomMetricsService(string name, double updateRateSeconds, bool collectMetrics)
         {
             if (!MetricsEventSources.TryGetValue(name, out var eventSource))
             {
                 MetricsEventSources.Add(name, eventSource = new CustomMetricsEventSource(name));
-                eventSource.DefaultListener = RegisterCustomMetricsEventListener(eventSource, updateRateSeconds, enableFiltering);
+                eventSource.DefaultListener = RegisterCustomMetricsEventListener(eventSource, updateRateSeconds, collectMetrics);
 
                 Console.WriteLine($"Created EventSource '{name}' @ E{eventSource.GetHashCode():x8} with default EventListener @ L{eventSource.DefaultListener.GetHashCode():x8}");
             }
@@ -42,15 +42,15 @@ namespace Metrics
         /// <param name="metricsService"></param>
         /// <param name="updateRateSeconds"></param>
         /// <returns></returns>
-        private static EventListener RegisterCustomMetricsEventListener(ICustomMetricsService metricsService, double updateRateSeconds, bool enableFiltering)
+        private static EventListener RegisterCustomMetricsEventListener(ICustomMetricsService metricsService, double updateRateSeconds, bool collectMetrics)
         {
             var eventSource = metricsService as EventSource;
-            var reader = new CustomMetricsEventListener(eventSource, enableFiltering);
+            var reader = new CustomMetricsEventListener();
             var arguments = new Dictionary<string, string>
             {
                 {"EventCounterIntervalSec", updateRateSeconds.ToString(CultureInfo.InvariantCulture)}
             };
-            reader.EnableEvents(eventSource, EventLevel.LogAlways, EventKeywords.None, arguments);
+            reader.EnableEvents(eventSource, EventLevel.LogAlways, EventKeywords.None, collectMetrics ? arguments : null);
 
             return reader;
         }
