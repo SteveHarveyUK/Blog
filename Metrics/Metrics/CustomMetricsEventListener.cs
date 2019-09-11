@@ -14,35 +14,16 @@ namespace Metrics
     /// </summary>
     internal class CustomMetricsEventListener : EventListener
     {
-        private readonly EventSource _filterSource;
-        private readonly bool _enableFiltering;
-
-        internal CustomMetricsEventListener(EventSource filter, bool enabledFiltering) : base()
-        {
-            _filterSource = filter;
-            _enableFiltering = enabledFiltering;
-        }
-
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            if (_enableFiltering)
-            {
-                if (!ReferenceEquals(eventData.EventSource, _filterSource))
-                {
-                    return;
-                }
-            }
-
-            var counterData = eventData.ToEventCounterData();
+             var counterData = eventData.ToEventCounterData();
 
             if (counterData == null)
             {
                 Console.WriteLine($"L{this.GetHashCode():x8}:" +
                                   $"E{eventData.GetHashCode():x8}:" +
                                   $"{eventData.EventName} " +
-                                  $"{eventData.Payload.FirstOrDefault().ToString()} " + 
-                                  $" {(ReferenceEquals(eventData.EventSource, _filterSource)?"":"(WRONG EventSource)")}"
-                                  );
+                                  $"{eventData.Payload.FirstOrDefault().ToString()} ");
                 return;
             }
 
@@ -60,8 +41,7 @@ namespace Metrics
                     $"'{counterData.EventSource}/{counterData.EventName}' => " +
                     $"{counterData.Name} " +
                     $"Count {counterData.Count}, " +
-                    $"IntervalSec: {counterData.IntervalSec}"+ 
-                    $" {(ReferenceEquals(eventData.EventSource, _filterSource)?"":"(WRONG EventSource)")}");
+                    $"IntervalSec: {counterData.IntervalSec}");
             }
             else
             {
@@ -75,8 +55,7 @@ namespace Metrics
                     $"Count {counterData.Count}, " +
                     $"Mean {counterData.Mean}, " +
                     $"StandardDeviation: {counterData.StandardDeviation}, " +
-                    $"IntervalSec: {counterData.IntervalSec}"+ 
-                    $" {(ReferenceEquals(eventData.EventSource, _filterSource)?"":"(WRONG EventSource)")}");
+                    $"IntervalSec: {counterData.IntervalSec}");
             }
         }
     }
