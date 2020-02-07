@@ -14,48 +14,70 @@ namespace Metrics
     /// </summary>
     internal class CustomMetricsEventListener : EventListener
     {
+        private readonly object _outputLockObj = new object();
+
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-             var counterData = eventData.ToEventCounterData();
-
-            if (counterData == null)
+            lock (_outputLockObj)
             {
-                Console.WriteLine($"L{this.GetHashCode():x8}:" +
-                                  $"E{eventData.GetHashCode():x8}:" +
-                                  $"{eventData.EventName} " +
-                                  $"{eventData.Payload.FirstOrDefault().ToString()} ");
-                return;
-            }
+                var counterData = eventData.ToEventCounterData();
 
-            // Only write to console if actual data has been reported
-            if (counterData?.Count == 0)
-                return;
+                var oldCol = Console.ForegroundColor;
+                if (counterData == null)
+                {
+                    Console.ForegroundColor = MetricsFactory.GetConsoleColor(this.GetHashCode());
+                    Console.Write($"EL{this.GetHashCode():x8}");
+                    Console.ForegroundColor = oldCol;
+                    Console.Write($" RX ED{eventData.GetHashCode():x8} => ");
+                    Console.ForegroundColor = MetricsFactory.GetConsoleColor(eventData.EventSource.GetHashCode());
+                    Console.Write($"ES{eventData.EventSource.GetHashCode():x8}:{eventData.EventName}");
+                    Console.ForegroundColor = oldCol;
+                    Console.WriteLine($"{eventData.Payload.FirstOrDefault().ToString()} ");
 
-            // ReportOccurence calls pass in NaN for the metric value so we can publish different
-            // patterns for ReportOccurence and ReportMetric
-            if (float.IsNaN(counterData.Min))
-            {
-                Console.WriteLine(
-                    $"L{this.GetHashCode():x8}:" +
-                    $"E{counterData.EventHash:x8}:" +
-                    $"'{counterData.EventSource}/{counterData.EventName}' => " +
-                    $"{counterData.Name} " +
-                    $"Count {counterData.Count}, " +
-                    $"IntervalSec: {counterData.IntervalSec}");
-            }
-            else
-            {
-                Console.WriteLine(
-                    $"L{this.GetHashCode():x8}:" +
-                    $"E{counterData.EventHash:x8}:" +
-                    $"'{counterData.EventSource}/{counterData.EventName}' => " +
-                    $"{counterData.Name} " +
-                    $"Min: {counterData.Min}, " +
-                    $"Max: {counterData.Max}, " +
-                    $"Count {counterData.Count}, " +
-                    $"Mean {counterData.Mean}, " +
-                    $"StandardDeviation: {counterData.StandardDeviation}, " +
-                    $"IntervalSec: {counterData.IntervalSec}");
+                    return;
+                }
+
+                // Only write to console if actual data has been reported
+                if (counterData?.Count == 0)
+                    return;
+
+                // ReportOccurence calls pass in NaN for the metric value so we can publish different
+                // patterns for ReportOccurence and ReportMetric
+                if (float.IsNaN(counterData.Min))
+                {
+                    Console.ForegroundColor = MetricsFactory.GetConsoleColor(this.GetHashCode());
+                    Console.Write($"EL{this.GetHashCode():x8}");
+                    Console.ForegroundColor = oldCol;
+                    Console.Write($" RX ED{counterData.EventHash:x8} => ");
+                    Console.ForegroundColor = MetricsFactory.GetConsoleColor(eventData.EventSource.GetHashCode());
+                    Console.Write(
+                        $"ES{eventData.EventSource.GetHashCode():x8}:'{counterData.EventSource}/{counterData.EventName}'");
+                    Console.ForegroundColor = oldCol;
+                    Console.WriteLine($" => " +
+                                      $"{counterData.Name} " +
+                                      $"Count {counterData.Count}, " +
+                                      $"IntervalSec: {counterData.IntervalSec}");
+                }
+                else
+                {
+                    Console.ForegroundColor = MetricsFactory.GetConsoleColor(this.GetHashCode());
+                    Console.Write($"EL{this.GetHashCode():x8}");
+                    Console.ForegroundColor = oldCol;
+                    Console.Write($" RX ED{counterData.EventHash:x8} => ");
+                    Console.Write(":");
+                    Console.ForegroundColor = MetricsFactory.GetConsoleColor(eventData.EventSource.GetHashCode());
+                    Console.Write(
+                        $"ES{eventData.EventSource.GetHashCode():x8}:'{counterData.EventSource}/{counterData.EventName}'");
+                    Console.ForegroundColor = oldCol;
+                    Console.WriteLine($" => " +
+                                      $"{counterData.Name} " +
+                                      $"Min: {counterData.Min}, " +
+                                      $"Max: {counterData.Max}, " +
+                                      $"Count {counterData.Count}, " +
+                                      $"Mean {counterData.Mean}, " +
+                                      $"StandardDeviation: {counterData.StandardDeviation}, " +
+                                      $"IntervalSec: {counterData.IntervalSec}");
+                }
             }
         }
     }
