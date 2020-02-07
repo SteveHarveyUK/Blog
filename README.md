@@ -1,5 +1,3 @@
-# Blog
-Placeholder for code [I blogged about](https://dev.to/expecho)
+Fork of Expecho/Blog
 
-### Folders in this repository
-- Metrics: Reporting Metrics Using .Net (Core)
+Demonstrates unexpected EventCounter events appearing at all listeners, regardless of the EventSource they were enabled against.
